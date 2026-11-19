@@ -1,2 +1,20 @@
+
+[project]
+name = "erp-monitoring-dashboard"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "flask==3.0.3",
+    "sqlalchemy>=2.0",
+    "pymongo>=4.6",
+    "psycopg[binary]>=3.1",
+    "oracledb>=3.4.0,<4",
+    "python-dotenv==1.0.1",
+    "waitress==3.0.0",
+    "reportlab>=4.0",
+    "openpyxl>=3.1",
+    "xlwt>=1.3.0"
+]
+
 [tool.vercel]
 entrypoint = "app_local:app"
