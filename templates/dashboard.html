@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP Monitoring Dashboard</title>
+<style>
+:root{
+  --navy:#172b4d; --blue:#175cd3; --muted:#667085; --line:#e8ecf4;
+  --red:#d92d20; --red-bg:#fde4e4; --amber:#b54708; --amber-bg:#fff1c9; --green:#1b7a3a; --green-bg:#d8f0de;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Inter,Arial,sans-serif;color:#1d2939;
+  background:linear-gradient(160deg,#dfe6fb 0%,#eef1fb 45%,#e6ebfa 100%);min-height:100vh}
+.wrap{max-width:1280px;margin:auto;padding:18px 26px 40px}
+
+/* header */
+.topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:34px;height:34px;color:var(--blue)}
+.brand h1{margin:0;font-size:22px;color:var(--navy)}
+.brand .sub{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:#12b76a;display:inline-block}
+.top-right{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--muted)}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--blue);
+  display:inline-flex;align-items:center;gap:8px;font-family:inherit}
+.btn:hover{background:#1349a8}
+.btn.light{background:#fff;color:var(--blue);border:1px solid #c7d4f5}
+.btn.light:hover{background:#f3f6ff}
+.btn svg{width:16px;height:16px}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
+.kpis.small{grid-template-columns:repeat(6,1fr)}
+.kpi{background:rgba(255,255,255,.75);border:1px solid #fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 2px 10px rgba(23,43,77,.06);text-align:left;font-family:inherit;color:inherit;width:100%}
+button.kpi{cursor:pointer;transition:.15s}
+button.kpi:hover{background:#fff;border-color:#9db6f2;transform:translateY(-1px);box-shadow:0 6px 16px rgba(23,92,211,.16)}
+.kpi .ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none}
+.kpi .ic svg{width:24px;height:24px}
+.kpi .lbl{font-size:14px;color:#344054}
+.kpi .val{font-size:26px;font-weight:700;color:var(--navy);line-height:1.15}
+.kpis.small .kpi{padding:10px 14px}.kpis.small .val{font-size:20px}.kpis.small .lbl{font-size:12.5px}
+.c-blue{background:#e1e9fd;color:#2f5fd0}.c-red{background:#fde4e4;color:var(--red)}
+.c-green{background:#d8f0de;color:#12803a}.c-amber{background:#fff1c9;color:#b54708}.c-purple{background:#e9e4fb;color:#5b3fd1}
+
+/* panels */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.panel{background:rgba(255,255,255,.82);border:1px solid #fff;border-radius:14px;padding:18px 22px;box-shadow:0 2px 10px rgba(23,43,77,.06)}
+.panel h2{margin:0 0 8px;font-size:18px;color:var(--navy)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid var(--line);font-size:14.5px;
+  width:100%;background:none;border-left:0;border-right:0;border-top:0;font-family:inherit;color:inherit;text-align:left}
+.row:last-child{border-bottom:0}
+button.row{cursor:pointer;border-radius:8px;transition:.12s}
+button.row:hover{background:#eef3ff}
+button.row:hover .badge{box-shadow:0 0 0 3px rgba(23,92,211,.18)}
+.row small{color:var(--muted);font-size:12px;display:block;margin-top:2px}
+.badge{min-width:26px;text-align:center;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:700;display:inline-block}
+.b-red{background:var(--red-bg);color:#b42318}.b-amber{background:var(--amber-bg);color:#93370d}
+.b-green{background:var(--green-bg);color:#17692f}.b-blue{background:#dbe8fb;color:#174ea6}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.phead h2{margin:0 0 8px}
+.link{border:0;background:none;color:var(--blue);font:600 13px inherit;font-family:inherit;cursor:pointer;padding:4px 6px;border-radius:6px}
+.link:hover{background:#eef3ff;text-decoration:underline}
+.hint{font-size:12px;color:var(--muted);margin:-2px 0 6px}
+.empty{color:var(--muted);padding:10px 0}
+
+/* toolbar + inline tools */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 0}
+#inline-tools{display:none;margin:0 0 16px;padding:20px}
+#inline-tools-content{overflow-x:auto}
+#inline-tools-content table{width:100%;border-collapse:collapse;font-size:13px}
+#inline-tools-content th,#inline-tools-content td{padding:9px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+#inline-tools-content th{background:var(--navy);color:#fff}
+#inline-tools-content .panel{margin:12px 0}
+.footer{text-align:center;color:var(--muted);padding:26px 0 0;font-size:13px}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(23,43,77,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:min(1000px,100%);max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 24px 60px rgba(0,0,0,.28)}
+.m-head{display:flex;align-items:center;gap:14px;padding:18px 24px 6px}
+.m-ico{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}
+.m-ico svg{width:22px;height:22px}
+.m-head h3{margin:0;font-size:19px;color:var(--navy)}
+.m-head p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.x{margin-left:auto;border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#475467;padding:4px 8px}
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 24px;font-size:14px;color:#344054}
+.filters input[type=date]{padding:8px 10px;border:1px solid #d0d5dd;border-radius:6px;font:inherit}
+.filters a{color:var(--blue);cursor:pointer;font-weight:600;font-size:14px}
+.m-body{padding:0 24px;overflow:auto;flex:1}
+.m-body table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+.m-body th{position:sticky;top:0;background:#eef2fb;color:#344054;text-align:left;padding:10px;font-weight:600;border-bottom:1px solid var(--line)}
+.m-body td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+.m-body tr:hover td{background:#f8faff}
+.m-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 18px;font-size:13px;color:var(--muted);gap:10px;flex-wrap:wrap}
+.err{color:#b42318;padding:14px 0}
+
+
+/* Notification center */
+.notification-wrap{position:relative;display:flex;align-items:center;gap:8px}
+.bell-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;color:var(--navy);cursor:pointer}
+.bell-btn svg{width:21px;height:21px}
+.unread-badge{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#d92d20;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid white}
+.unread-badge[hidden]{display:none}
+.notif-menu{display:none;position:absolute;right:0;top:48px;width:min(420px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:white;border:1px solid #dfe4ee;border-radius:12px;box-shadow:0 18px 45px #172b4d30;z-index:60}
+.notif-menu.open{display:block}
+.notif-head{position:sticky;top:0;background:white;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--line);z-index:1}
+.notif-head strong{color:var(--navy)}
+.notif-actions{display:flex;gap:6px;flex-wrap:wrap}
+.notif-small-btn{border:0;background:#eef3ff;color:#175cd3;border-radius:6px;padding:6px 8px;font:inherit;font-size:12px;cursor:pointer}
+.notif-item{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #edf0f6;padding:12px 14px;background:#fff;cursor:pointer;font:inherit;color:#344054}
+.notif-item:hover{background:#f8faff}.notif-item.unread{background:#f0f5ff;border-left:3px solid #175cd3}.notif-item.read{opacity:.78}
+.notif-item-title{font-weight:700;color:#172b4d;font-size:13px;margin-bottom:4px}.notif-item-message{font-size:12px;line-height:1.45;overflow-wrap:anywhere}.notif-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px;font-size:11px;color:#667085}
+.notif-sev{font-size:10px;font-weight:800;padding:3px 6px;border-radius:999px;background:#fee4e2;color:#b42318}.notif-sev.warning{background:#fff1c9;color:#93370d}.notif-sev.info{background:#e0edff;color:#1849a9}
+.notif-empty{padding:20px 14px;color:#667085;font-size:13px}
+.notif-detail-overlay{position:fixed;inset:0;z-index:80;background:#172b4d70;display:none;align-items:center;justify-content:center;padding:18px}.notif-detail-overlay.open{display:flex}
+.notif-detail-card{width:min(620px,100%);max-height:85vh;overflow:auto;background:white;border-radius:14px;box-shadow:0 24px 60px #0003;padding:20px}
+.notif-detail-top{display:flex;align-items:flex-start;gap:12px}.notif-detail-top h3{margin:0;color:var(--navy);font-size:19px}.notif-detail-top button{margin-left:auto;border:0;background:none;font-size:25px;cursor:pointer}
+.notif-detail-body{white-space:pre-wrap;overflow-wrap:anywhere;color:#344054;font-size:14px;line-height:1.6;margin:16px 0}
+.notif-detail-json{background:#f8faff;border:1px solid #e8ecf4;border-radius:8px;padding:12px;font-size:12px;overflow:auto;max-height:240px}
+
+/* download / export dropdown */
+.dl{position:relative;display:inline-block}
+.dl-btn{cursor:pointer;border:1px solid #c7d4f5;background:#fff;color:var(--blue);border-radius:8px;padding:6px 12px;font:600 13px inherit;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.dl-btn:hover,.dl.open .dl-btn{background:#f3f6ff}
+.dl-btn.big{padding:10px 18px;font-size:14px}
+.dl-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:190px;background:#fff;border:1px solid #dfe4ee;border-radius:10px;box-shadow:0 14px 36px #172b4d33;z-index:90;padding:6px;text-align:left}
+.dl.open .dl-menu{display:block}
+.dl.up .dl-menu{top:auto;bottom:calc(100% + 6px)}
+.dl-menu .dl-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 10px 4px}
+.dl-menu button{display:flex;width:100%;align-items:center;gap:8px;border:0;background:none;padding:8px 10px;border-radius:6px;font:500 13px inherit;font-family:inherit;color:#344054;cursor:pointer;text-align:left}
+.dl-menu button:hover{background:#eef3ff;color:var(--blue)}
+.dl-menu button small{margin-left:auto;color:var(--muted);font-size:11px}
+.dl-busy{opacity:.6;pointer-events:none}
+.phead-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.kpis.small{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.kpis,.kpis.small{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis,.kpis.small{grid-template-columns:1fr}.wrap{padding:14px}}
+</style>
+</head>
+<body>
+{# ---------- reusable download dropdown ---------- #}
+{% macro download_menu(cat, value='ALL', big=False, up=False) %}
+<div class="dl{{ ' up' if up else '' }}" data-dl-cat="{{ cat }}" data-dl-value="{{ value }}">
+  <button type="button" class="dl-btn{{ ' big' if big else '' }}" aria-haspopup="true" aria-expanded="false">⬇ Download <span aria-hidden="true">▾</span></button>
+  <div class="dl-menu" role="menu">
+    <div class="dl-title">Download / Export</div>
+    <button type="button" role="menuitem" data-fmt="pdf">📄 PDF format <small>.pdf</small></button>
+    <button type="button" role="menuitem" data-fmt="xlsx">📊 Excel format <small>.xlsx</small></button>
+    <button type="button" role="menuitem" data-fmt="csv">🧾 CSV format <small>.csv</small></button>
+    <button type="button" role="menuitem" data-fmt="xls">📑 XLS format <small>.xls</small></button>
+  </div>
+</div>
+{% endmacro %}
+{# ---------- reusable icons ---------- #}
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-users" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6z"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.2c3 .2 5 2.2 5 5.3h-4.2c0-2-.4-3.7-.8-5.3z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7.6 3 4 4.3 4 6v2c0 1.7 3.6 3 8 3s8-1.3 8-3V6c0-1.7-3.6-3-8-3zm8 7.5c0 1.7-3.6 3-8 3s-8-1.3-8-3V13c0 1.7 3.6 3 8 3s8-1.3 8-3zm0 5c0 1.7-3.6 3-8 3s-8-1.3-8-3V18c0 1.7 3.6 3 8 3s8-1.3 8-3z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.1 5h2.2l-.4 7h-1.4zm1.1 12.2a1.3 1.3 0 110-2.6 1.3 1.3 0 010 2.6z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-2.2 5.6l7 4.4-7 4.4z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18a1 1 0 011 1v.5l-10 6.2L2 6.5V6a1 1 0 011-1zm-1 4l10 6.2L22 9v9a1 1 0 01-1 1H3a1 1 0 01-1-1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 5v5.2l3.8 2.2-.8 1.3L11 13V7z"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v4H7zM5 8h14a2 2 0 012 2v6h-4v4H7v-4H3v-6a2 2 0 012-2zm4 7v4h6v-4z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v10a1 1 0 01-1 1H6a1 1 0 01-1-1V11a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 002.4-2h-4.8A2.5 2.5 0 0012 22zm7-5v-6a7 7 0 00-5-6.7V4a2 2 0 10-4 0v.3A7 7 0 005 11v6l-2 2v1h18v-1z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 10-2.3 6.1"/><path d="M20 4v7h-7"/></symbol>
+</svg>
+
+<div class="wrap">
+
+  <!-- ================= HEADER ================= -->
+  <div class="topbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></svg>
+      <div>
+        <h1>ERP Monitoring Dashboard</h1>
+        <div class="sub"><span class="dot"></span> Local Dummy Database • Monitoring &amp; Health Overview</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span>⟳ Last Updated: {{ last_updated }}</span>
+      <div class="notification-wrap">
+        <button type="button" class="bell-btn" id="notification-bell" aria-label="Notifications" aria-expanded="false" title="Notifications"><svg><use href="#i-bell"/></svg><span class="unread-badge" id="unread-badge" hidden>0</span></button>
+        <div class="notif-menu" id="notification-menu" role="region" aria-label="Notifications">
+          <div class="notif-head"><strong>Notifications <span id="notif-unread-label"></span></strong><div class="notif-actions"><button type="button" class="notif-small-btn" id="enable-browser-notifs">Enable Browser Notifications</button><button type="button" class="notif-small-btn" id="mark-all-read">Mark All as Read</button></div></div>
+          <div class="notif-actions" style="padding:8px 12px;border-bottom:1px solid var(--line)"><button type="button" class="notif-small-btn" id="test-notification">Send Test Notification</button><span id="browser-notif-status" style="font-size:11px;color:#667085;align-self:center"></span></div>
+          <div id="notification-list"><div class="notif-empty">Loading notifications…</div></div>
+        </div>
+      </div>
+      <button class="btn" type="button" onclick="location.reload()"><svg><use href="#i-refresh"/></svg> Refresh</button>
+    </div>
+  </div>
+
+  <!-- ================= TOOLBAR + INLINE REPORT (now at the top) ================= -->
+  <div class="toolbar" style="margin:0 0 14px">
+    <button type="button" class="btn light js-inline" data-url="/report" data-title="Date-wise Report">Open Date-wise Report</button>
+    <button type="button" class="btn light js-inline" data-url="/details/errors" data-title="Unacknowledged Error Details">View Error Details</button>
+  </div>
+  <section id="inline-tools" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <h2 id="inline-tools-title" style="margin:0">Dashboard Details</h2>
+      <button type="button" id="close-inline-tools" class="btn light">Hide Details</button>
+    </div>
+    <div id="inline-tools-content"></div>
+  </section>
+
+  <!-- ================= PRIMARY KPIs (click any card for its records + date filter) ================= -->
+  <div class="kpis">
+    <button class="kpi js-detail" data-cat="users" data-value="ALL" type="button"><div class="ic c-blue"><svg><use href="#i-users"/></svg></div><div><div class="lbl">Active Users</div><div class="val">{{ active_users }}</div></div></button>
+    <button class="kpi js-detail" data-cat="sessions" data-value="ALL" type="button"><div class="ic c-blue"><svg><use href="#i-db"/></svg></div><div><div class="lbl">Active DB Sessions</div><div class="val">{{ active_sessions }}</div></div></button>
+    <button class="kpi js-detail" data-cat="jobs" data-value="ERROR" type="button"><div class="ic c-red"><svg><use href="#i-alert"/></svg></div><div><div class="lbl">Jobs in Error</div><div class="val">{{ jobs_error }}</div></div></button>
+    <button class="kpi js-detail" data-cat="jobs" data-value="EXECUTING" type="button"><div class="ic c-green"><svg><use href="#i-play"/></svg></div><div><div class="lbl">Executing Jobs</div><div class="val">{{ executing_jobs }}</div></div></button>
+    <button class="kpi js-detail" data-cat="messages" data-value="FAILED" type="button"><div class="ic c-purple"><svg><use href="#i-mail"/></svg></div><div><div class="lbl">Failed Messages</div><div class="val">{{ failed_messages }}</div></div></button>
+  </div>
+
+  <!-- ================= SECONDARY KPIs ================= -->
+  <div class="kpis small">
+    <button class="kpi js-detail" data-cat="messages" data-value="WAITING" type="button"><div class="ic c-amber"><svg><use href="#i-clock"/></svg></div><div><div class="lbl">Waiting Messages</div><div class="val">{{ waiting_messages }}</div></div></button>
+    <button class="kpi js-detail" data-cat="printjobs" data-value="FAILED" type="button"><div class="ic c-red"><svg><use href="#i-print"/></svg></div><div><div class="lbl">Failed Print Jobs</div><div class="val">{{ failed_print_jobs }}</div></div></button>
+    <button class="kpi js-detail" data-cat="locks" data-value="ALL" type="button"><div class="ic c-red"><svg><use href="#i-lock"/></svg></div><div><div class="lbl">DB Locks</div><div class="val">{{ blocking_locks }}</div></div></button>
+    <button class="kpi js-detail" data-cat="locks" data-value="ALL" type="button"><div class="ic c-amber"><svg><use href="#i-clock"/></svg></div><div><div class="lbl">Longest Lock Wait</div><div class="val">{{ longest_lock_wait }} sec</div></div></button>
+    <button class="kpi js-detail" data-cat="alerts" data-value="ALL" type="button"><div class="ic c-amber"><svg><use href="#i-bell"/></svg></div><div><div class="lbl">Open / Critical Alerts</div><div class="val">{{ open_alerts }} / {{ critical_alerts }}</div></div></button>
+    <button class="kpi js-detail" data-cat="errors" data-value="ALL" type="button"><div class="ic c-red"><svg><use href="#i-alert"/></svg></div><div><div class="lbl">Unacknowledged Errors</div><div class="val">{{ unack_errors }}</div></div></button>
+  </div>
+
+  <!-- ================= PANELS ================= -->
+  <div class="grid">
+
+    <div class="panel">
+      <div class="phead"><h2>Background Jobs</h2><div class="phead-actions">{{ download_menu("jobs") }}<button type="button" class="link js-detail" data-cat="jobs" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click a status to see its records, with date filter.</div>
+      {% if background_job_data %}
+        {% for state, count in background_job_data.items() %}
+          <button type="button" class="row js-detail" data-cat="jobs" data-value="{{ state }}">
+            <span>{{ state }}</span>
+            <span class="badge {{ 'b-red' if state == 'ERROR' else ('b-amber' if state in ['EXECUTING','WARNING'] else 'b-green') }}">{{ count }}</span>
+          </button>
+        {% endfor %}
+      {% else %}<div class="empty">No background job data available.</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>Application Messages</h2><div class="phead-actions">{{ download_menu("messages") }}<button type="button" class="link js-detail" data-cat="messages" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click a status to see its records, with date filter.</div>
+      {% if application_message_data %}
+        {% for state, count in application_message_data.items() %}
+          <button type="button" class="row js-detail" data-cat="messages" data-value="{{ state }}">
+            <span>{{ state }}</span>
+            <span class="badge {{ 'b-red' if state == 'FAILED' else ('b-amber' if state in ['WAITING','PROCESSING'] else 'b-green') }}">{{ count }}</span>
+          </button>
+        {% endfor %}
+      {% else %}<div class="empty">No application message data available.</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>Server Health</h2><div class="phead-actions">{{ download_menu("servers") }}<button type="button" class="link js-detail" data-cat="servers" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click a server to see its history, with date filter.</div>
+      {% if server_health %}
+        {% for server in server_health %}
+          <button type="button" class="row js-detail" data-cat="servers" data-value="{{ server['server_name'] }}" data-status="{{ server['status'] }}">
+            <span>{{ server["server_name"] }}
+              <small>CPU {{ server["cpu_percent"] }}% • Memory {{ server["memory_percent"] }}% • Disk {{ server["disk_percent"] }}%</small></span>
+            <span class="badge {{ 'b-green' if server['status']=='HEALTHY' else ('b-amber' if server['status']=='WARNING' else 'b-red') }}">{{ server["status"] }}</span>
+          </button>
+        {% endfor %}
+      {% else %}<div class="empty">No server health data available.</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>API Health</h2><div class="phead-actions">{{ download_menu("apis") }}<button type="button" class="link js-detail" data-cat="apis" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click an API to see its history, with date filter.</div>
+      {% if api_health %}
+        {% for api in api_health %}
+          <button type="button" class="row js-detail" data-cat="apis" data-value="{{ api['api_name'] }}" data-status="{{ api['status'] }}">
+            <span>{{ api["api_name"] }}</span>
+            <span class="badge {{ 'b-green' if api['status'] in ['UP','HEALTHY'] else ('b-amber' if api['status']=='DEGRADED' else 'b-red') }}">{{ api["status"] }}</span>
+          </button>
+        {% endfor %}
+      {% else %}<div class="empty">No API health data available.</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>Alert Summary</h2><div class="phead-actions">{{ download_menu("alerts") }}<button type="button" class="link js-detail" data-cat="alerts" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click a severity to see the open alerts, with date filter.</div>
+      <button type="button" class="row js-detail" data-cat="alerts" data-value="CRITICAL"><span>Critical</span><span class="badge b-red">{{ alert_data.get("CRITICAL", 0) }}</span></button>
+      <button type="button" class="row js-detail" data-cat="alerts" data-value="WARNING"><span>Warning</span><span class="badge b-amber">{{ alert_data.get("WARNING", 0) }}</span></button>
+      <button type="button" class="row js-detail" data-cat="alerts" data-value="INFO"><span>Info</span><span class="badge b-blue">{{ alert_data.get("INFO", 0) }}</span></button>
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>Database Health</h2><div class="phead-actions">{{ download_menu("dbhealth") }}<button type="button" class="link js-detail" data-cat="dbhealth" data-value="ALL">View all records →</button></div></div>
+      <div class="hint">Click any row to see the health history, with date filter.</div>
+      {% if database_health %}
+        <button type="button" class="row js-detail" data-cat="dbhealth" data-value="ALL"><span>Database</span><span class="badge b-green">CONNECTED</span></button>
+        {% if "status" in database_health.keys() %}<button type="button" class="row js-detail" data-cat="dbhealth" data-value="ALL"><span>Health</span><span class="badge b-green">{{ database_health["status"] }}</span></button>{% endif %}
+        {% if "cpu_percent" in database_health.keys() %}<button type="button" class="row js-detail" data-cat="dbhealth" data-value="ALL"><span>CPU Usage</span><span>{{ database_health["cpu_percent"] }}%</span></button>{% endif %}
+        {% if "memory_percent" in database_health.keys() %}<button type="button" class="row js-detail" data-cat="dbhealth" data-value="ALL"><span>Memory Usage</span><span>{{ database_health["memory_percent"] }}%</span></button>{% endif %}
+      {% else %}<div class="empty">No database health data available.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="footer">ERP Monitoring Tool • Local Testing Dashboard</div>
+</div>
+
+<!-- ================= DETAIL MODAL ================= -->
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="m-head">
+      <div class="m-ico" id="m-ico"><svg><use href="#i-alert"/></svg></div>
+      <div><h3 id="m-title">Details</h3><p id="m-sub"></p></div>
+      <button class="x" type="button" id="m-x" aria-label="Close">×</button>
+    </div>
+    <div class="filters">
+      <span>📅 Start Date:</span><input type="date" id="f-start" min="2026-01-01" max="2026-12-31">
+      <span>End Date:</span><input type="date" id="f-end" min="2026-01-01" max="2026-12-31">
+      <button class="btn" type="button" id="f-apply">Filter Report</button>
+      <a id="f-clear">Clear</a>
+      <span style="margin-left:auto" id="m-download">{{ download_menu("", "", big=True) }}</span>
+    </div>
+    <div class="m-body" id="m-body"></div>
+    <div class="m-foot"><span id="m-count"></span><button class="btn" type="button" id="m-close">✕ Close</button></div>
+  </div>
+</div>
+
+<!-- Notification detail popup: unread is marked read only after this popup closes -->
+<div class="notif-detail-overlay" id="notification-detail-overlay" aria-hidden="true">
+  <section class="notif-detail-card" role="dialog" aria-modal="true" aria-labelledby="notification-detail-title">
+    <div class="notif-detail-top"><div><h3 id="notification-detail-title">Notification Details</h3><div id="notification-detail-meta" class="notif-meta"></div></div><button type="button" id="notification-detail-close" aria-label="Close notification details">×</button></div>
+    <div id="notification-detail-message" class="notif-detail-body"></div>
+    <div><strong style="font-size:13px;color:#172b4d">Event details</strong><pre id="notification-detail-json" class="notif-detail-json"></pre></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button type="button" class="btn" id="notification-detail-done">Close and Mark as Read</button></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const BAD = ['ERROR','FAILED','CRITICAL','DOWN'], WARN = ['EXECUTING','WARNING','WAITING','PROCESSING','DEGRADED','QUEUED'], INFO = ['INFO'];
+  let cat = '', value = '', lockedStatus = '';
+
+  const pillClass = s => BAD.includes(s) ? 'b-red' : WARN.includes(s) ? 'b-amber' : INFO.includes(s) ? 'b-blue' : 'b-green';
+  const icoClass  = s => s === 'ALL' ? 'c-blue' : BAD.includes(s) ? 'c-red' : WARN.includes(s) ? 'c-amber' : INFO.includes(s) ? 'c-blue' : 'c-green';
+
+  function qs(extra) {
+    const p = new URLSearchParams();
+    if ($('f-start').value) p.set('start_date', $('f-start').value);
+    if ($('f-end').value)   p.set('end_date',   $('f-end').value);
+    if (lockedStatus) p.set('locked_status', lockedStatus);
+    if (extra) Object.keys(extra).forEach(k => p.set(k, extra[k]));
+    const s = p.toString();
+    return s ? '?' + s : '';
+  }
+
+  async function load(initial) {
+    $('m-body').innerHTML = '<p style="padding:14px 0;color:#667085">Loading records…</p>';
+    try {
+      const res = await fetch(`/api/details/${cat}/${encodeURIComponent(value)}` + qs());
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.status);
+
+      const all = data.value === 'ALL';
+      $('m-title').textContent = lockedStatus && ['servers','apis'].includes(cat)
+        ? `${data.title} — ${data.value} • ${lockedStatus} (${data.total})`
+        : `${data.title} — ${all ? 'All Records' : data.value} (${data.total})`;
+      $('m-sub').textContent = all ? `All ${data.title.toLowerCase()} with date filter`
+                                   : `Details of ${data.value} — ${data.title.toLowerCase()}`;
+      $('m-ico').className = 'm-ico ' + icoClass(data.value.toUpperCase());
+      if (initial) {                       // pre-fill the range from the data itself
+        $('f-start').value = data.first_date;
+        $('f-end').value = data.last_date;
+        $('f-start').dataset.min = data.first_date; $('f-end').dataset.max = data.last_date;
+      }
+      const head = data.columns.map(c => `<th>${esc(c.label)}</th>`).join('');
+      const body = data.rows.map(r => '<tr>' + data.columns.map(c => {
+        const v = r[c.key];
+        if (c.key === 'state') return `<td><span class="badge ${pillClass(v)}">${esc(v)}</span></td>`;
+        if (c.key === 'description') return `<td>${v ? esc(v) : '—'}</td>`;
+        return `<td>${esc(v == null ? '—' : v)}</td>`;
+      }).join('') + '</tr>').join('');
+      $('m-body').innerHTML = data.rows.length
+        ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`
+        : '<p style="padding:14px 0;color:#667085">No records found for this date range.</p>';
+      $('m-count').textContent = `Showing ${data.shown} of ${data.total} record(s)` +
+        (data.total > data.shown ? ' — use the date range to narrow the report' : '');
+    } catch (e) {
+      $('m-body').innerHTML = `<p class="err">Could not load records: ${esc(e.message)}</p>`;
+      $('m-count').textContent = '';
+    }
+  }
+
+  function openModal(c, v, status) {
+    cat = c; value = v;
+    lockedStatus = (['servers','apis'].includes(c)) ? String(status || '').toUpperCase() : '';
+    $('f-start').value = ''; $('f-end').value = '';
+    $('overlay').classList.add('open'); $('overlay').setAttribute('aria-hidden', 'false');
+    load(true);
+  }
+  function closeModal() { $('overlay').classList.remove('open'); $('overlay').setAttribute('aria-hidden', 'true'); }
+
+  document.querySelectorAll('.js-detail').forEach(b => b.addEventListener('click', () => openModal(b.dataset.cat, b.dataset.value, b.dataset.status || '')));
+  $('f-apply').addEventListener('click', () => { const a=$('f-start').value, b=$('f-end').value; if ((a && (a<'2026-01-01'||a>'2026-12-31')) || (b && (b<'2026-01-01'||b>'2026-12-31')) || (a && b && a>b)) { $('m-body').innerHTML='<p class="err">Choose valid dates between 01-01-2026 and 31-12-2026. Start date must not be after end date.</p>'; return; } load(false); });
+  $('f-clear').addEventListener('click', () => { $('f-start').value = ''; $('f-end').value = ''; load(true); });
+  /* ---- Download / Export dropdowns (PDF, XLSX, CSV, XLS) ---- */
+  const FMT_LABEL = {pdf:'PDF', xlsx:'Excel (.xlsx)', csv:'CSV', xls:'XLS'};
+  function closeMenus(except) { document.querySelectorAll('.dl.open').forEach(d => { if (d !== except) { d.classList.remove('open'); d.querySelector('.dl-btn').setAttribute('aria-expanded','false'); } }); }
+  async function downloadReport(url, fmt, wrap) {
+    wrap.classList.add('dl-busy');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) { let msg = res.status; try { msg = (await res.json()).error || msg; } catch (_) {} throw new Error(msg); }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename="?([^";]+)"?/i.exec(cd);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = m ? m[1] : ('report.' + fmt);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (e) { alert(`Could not download ${FMT_LABEL[fmt] || fmt}: ${e.message}`); }
+    finally { wrap.classList.remove('dl-busy'); }
+  }
+  document.addEventListener('click', e => {
+    const wrap = e.target.closest('.dl');
+    if (!wrap) { closeMenus(); return; }
+    const item = e.target.closest('.dl-menu [data-fmt]');
+    if (!item) {                                   // toggle the menu
+      const open = !wrap.classList.contains('open');
+      closeMenus(wrap); wrap.classList.toggle('open', open);
+      wrap.querySelector('.dl-btn').setAttribute('aria-expanded', String(open));
+      return;
+    }
+    closeMenus();
+    const fmt = item.dataset.fmt;
+    if (wrap.closest('#m-download')) {             // modal: same category, status and date filters as the table shown
+      downloadReport(`/api/details/${cat}/${encodeURIComponent(value)}` + qs({format: fmt}), fmt, wrap);
+    } else {                                       // dashboard section: every record of that section
+      downloadReport(`/api/details/${wrap.dataset.dlCat}/${encodeURIComponent(wrap.dataset.dlValue || 'ALL')}?format=${fmt}`, fmt, wrap);
+    }
+  });
+  ['m-x', 'm-close'].forEach(id => $(id).addEventListener('click', closeModal));
+  $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenus(); closeModal(); } });
+
+  /* ---- Persistent notification center ---- */
+  const bell = $('notification-bell'), menu = $('notification-menu'), notifList = $('notification-list');
+  let notificationItems = [], openNotificationId = null, knownNotificationIds = new Set(), firstNotificationLoad = true;
+  const fmtTime = v => { if (!v) return 'Time unavailable'; const d = new Date(String(v).replace(' ', 'T')); return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleString(); };
+  const severityClass = s => String(s || '').toUpperCase() === 'INFO' ? 'info' : String(s || '').toUpperCase() === 'WARNING' ? 'warning' : '';
+  function renderNotifications() {
+    if (!notificationItems.length) { notifList.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
+    notifList.innerHTML = notificationItems.map(n => `<button type="button" class="notif-item ${n.is_read ? 'read' : 'unread'}" data-notification-id="${Number(n.notification_id)}"><div class="notif-item-title">${esc(n.title)}</div><div class="notif-item-message">${esc(n.message)}</div><div class="notif-meta"><span class="notif-sev ${severityClass(n.severity)}">${esc(n.severity)}</span><span>${esc(fmtTime(n.event_time || n.created_at))}</span><span>${n.is_read ? 'Read' : 'Unread'}</span></div></button>`).join('');
+  }
+  async function refreshNotifications() {
+    try {
+      const res = await fetch('/api/notifications', {cache:'no-store'}); const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Unable to load notifications');
+      const incoming = data.notifications || [];
+      if (!firstNotificationLoad && 'Notification' in window && Notification.permission === 'granted') {
+        const ids = new Set(incoming.map(n => Number(n.notification_id)));
+        incoming.forEach(n => { const id = Number(n.notification_id); if (!knownNotificationIds.has(id) && !n.is_read && n.severity === 'CRITICAL') { try { new Notification(n.title, {body:String(n.message || '').slice(0,160), tag:'erp-notification-'+id}); } catch (_) {} } });
+        knownNotificationIds = ids;
+      } else { knownNotificationIds = new Set(incoming.map(n => Number(n.notification_id))); }
+      firstNotificationLoad = false;
+      notificationItems = incoming;
+      const count = Number(data.unread_count || 0), badge = $('unread-badge');
+      badge.textContent = count > 99 ? '99+' : String(count); badge.hidden = count < 1;
+      $('notif-unread-label').textContent = count ? `(${count} unread)` : '(all caught up)';
+      renderNotifications();
+      const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+      $('browser-notif-status').textContent = perm === 'granted' ? 'Desktop notifications enabled' : perm === 'denied' ? 'Browser permission denied' : perm === 'unsupported' ? 'Not supported in this browser' : 'Permission not enabled';
+    } catch (e) { $('browser-notif-status').textContent = 'Notification refresh failed'; console.warn(e); }
+  }
+  bell.addEventListener('click', () => { const isOpen = menu.classList.toggle('open'); bell.setAttribute('aria-expanded', String(isOpen)); if (isOpen) refreshNotifications(); });
+  document.addEventListener('click', e => { if (!e.target.closest('.notification-wrap')) { menu.classList.remove('open'); bell.setAttribute('aria-expanded','false'); } });
+  notifList.addEventListener('click', e => { const item = e.target.closest('[data-notification-id]'); if (!item) return; const n = notificationItems.find(x => Number(x.notification_id) === Number(item.dataset.notificationId)); if (n) openNotificationDetails(n); });
+  const deliveryLabel = v => !v ? '' : v === 'sent' ? 'sent' : v.startsWith('failed') ? 'failed (will retry)' : 'not sent';
+  const deliveryBadges = n => (n.email_status === undefined && n.sms_status === undefined) ? '' :
+    `<span title="${esc(n.email_status || 'pending')}">✉ Email: ${esc(deliveryLabel(n.email_status) || 'pending')}</span><span title="${esc(n.sms_status || 'pending')}">💬 SMS: ${esc(deliveryLabel(n.sms_status) || 'pending')}</span>`;
+  function openNotificationDetails(n) {
+    openNotificationId = Number(n.notification_id);
+    $('notification-detail-title').textContent = n.title || 'Notification Details';
+    $('notification-detail-meta').innerHTML = `<span class="notif-sev ${severityClass(n.severity)}">${esc(n.severity)}</span><span>${esc(fmtTime(n.event_time || n.created_at))}</span><span>${n.is_read ? 'Read' : 'Unread — will be marked read when closed'}</span>${deliveryBadges(n)}`;
+    $('notification-detail-message').textContent = n.message || '';
+    $('notification-detail-json').textContent = JSON.stringify(n.details || {}, null, 2);
+    $('notification-detail-overlay').classList.add('open'); $('notification-detail-overlay').setAttribute('aria-hidden','false');
+  }
+  async function closeNotificationDetails() {
+    $('notification-detail-overlay').classList.remove('open'); $('notification-detail-overlay').setAttribute('aria-hidden','true');
+    const id = openNotificationId; openNotificationId = null;
+    if (id != null) { try { await fetch(`/api/notifications/${id}/read`, {method:'POST'}); } catch (e) { console.warn(e); } }
+    await refreshNotifications();
+  }
+  $('notification-detail-close').addEventListener('click', closeNotificationDetails);
+  $('notification-detail-done').addEventListener('click', closeNotificationDetails);
+  $('notification-detail-overlay').addEventListener('click', e => { if (e.target === $('notification-detail-overlay')) closeNotificationDetails(); });
+  $('mark-all-read').addEventListener('click', async () => { try { await fetch('/api/notifications/read-all', {method:'POST'}); await refreshNotifications(); } catch (e) { console.warn(e); } });
+  $('enable-browser-notifs').addEventListener('click', async () => {
+    if (!('Notification' in window)) { $('browser-notif-status').textContent = 'Browser desktop notifications are not supported.'; return; }
+    try { const permission = await Notification.requestPermission(); $('browser-notif-status').textContent = permission === 'granted' ? 'Desktop notifications enabled' : permission === 'denied' ? 'Permission denied; in-app notifications still work' : 'Permission not granted'; } catch (_) { $('browser-notif-status').textContent = 'Could not request browser permission'; }
+  });
+  $('test-notification').addEventListener('click', async () => { try { const res = await fetch('/api/notifications/test', {method:'POST'}); const data = await res.json(); if (!res.ok || !data.ok) throw new Error(data.error || 'Test notification failed'); await refreshNotifications(); menu.classList.add('open'); bell.setAttribute('aria-expanded','true'); } catch (e) { $('browser-notif-status').textContent = 'Test failed: ' + e.message; } });
+  refreshNotifications(); window.setInterval(refreshNotifications, 30000);
+
+  /* ---- existing inline Date-wise Report / Error Details panel ---- */
+  const panel = $('inline-tools'), content = $('inline-tools-content'), title = $('inline-tools-title');
+  async function loadInline(url, label) {
+    panel.style.display = 'block';
+    title.textContent = label || 'Dashboard Details';
+    content.innerHTML = '<p>Loading records...</p>';
+    panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+    try {
+      const res = await fetch(url);
+      const html = await res.text();
+      if (!res.ok) throw new Error(html || ('Request failed: ' + res.status));
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const main = doc.querySelector('main');
+      content.innerHTML = main ? main.innerHTML : html;
+    } catch (err) {
+      content.innerHTML = '<p class="err">Could not load records: ' + esc(err.message) + '</p>';
+    }
+  }
+  document.querySelectorAll('.js-inline').forEach(b => b.addEventListener('click', () => loadInline(b.dataset.url, b.dataset.title)));
+  $('close-inline-tools').addEventListener('click', () => { panel.style.display = 'none'; });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#inline-tools-content a[href="/"]')) { e.preventDefault(); panel.style.display = 'none'; window.scrollTo({top: 0, behavior: 'smooth'}); }
+  });
+  document.addEventListener('submit', e => {
+    const form = e.target.closest('#inline-tools-content form');
+    if (!form) return;
+    e.preventDefault();
+    const url = new URL(form.action, window.location.origin);
+    new FormData(form).forEach((v, k) => { if (v) url.searchParams.set(k, v); else url.searchParams.delete(k); });
+    loadInline(url.pathname + url.search, url.pathname === '/report' ? 'Date-wise Report' : 'Unacknowledged Error Details');
+  });
+})();
+</script>
+</body>
+</html>

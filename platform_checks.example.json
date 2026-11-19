@@ -1,0 +1,21 @@
+{
+  "_help": "Copy to platform_checks.json and edit. Types: http, login, pods, users, ad_sync. Remove checks you do not need.",
+  "namespace": "ifs-cloud",
+  "kubectl": "kubectl",
+  "checks": [
+    {"id": "webclient", "name": "Web Client Status", "type": "http",
+     "url": "https://gmuvdifs-coe-06.techmahindra.com/main/ifsapplications/web/", "warn_ms": 3000, "crit_ms": 8000},
+    {"id": "middleware", "name": "Middleware Status", "type": "pods", "pattern": "mws|middleware"},
+    {"id": "iam", "name": "IAM Pod Status", "type": "pods", "pattern": "iam|keycloak"},
+    {"id": "connect", "name": "Connect Pod Status", "type": "pods", "pattern": "connect"},
+    {"id": "odata", "name": "OData Routing Status", "type": "http",
+     "url": "https://gmuvdifs-coe-06.techmahindra.com/main/ifsapplications/projection/v1/", "warn_ms": 3000, "crit_ms": 8000},
+    {"id": "adsync", "name": "AD Synchronization Status", "type": "ad_sync",
+     "sql": "", "max_age_hours": 26},
+    {"id": "users", "name": "Active User Count", "type": "users", "warn_above": 500},
+    {"id": "login", "name": "Login Response Time", "type": "login",
+     "url": "https://gmuvdifs-coe-06.techmahindra.com/auth/realms/YOUR-REALM/.well-known/openid-configuration", "warn_ms": 3000, "crit_ms": 8000}
+  ]
+}
+
+

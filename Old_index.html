@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IFS Cloud Monitor - IFSCOESALES</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1d2733;--mut:#6b7785;--bd:#dde3ea;--ok:#1a7f4b;--warn:#b7791f;--bad:#c53030}
+@media(prefers-color-scheme:dark){:root{--bg:#111820;--card:#1a232e;--tx:#e6ebf0;--mut:#8b98a6;--bd:#2b3846;--ok:#48bb78;--warn:#ecc94b;--bad:#fc8181}}
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--card)}
+h1{font-size:17px;margin:0}small{color:var(--mut)}button{padding:6px 12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:6px;cursor:pointer}
+main{padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(480px,1fr))}
+section{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;min-width:0}
+section h2{font-size:14px;margin:0 0 4px;display:flex;justify-content:space-between}
+.badge{padding:1px 9px;border-radius:10px;font-size:12px;color:#fff;background:var(--ok)}.badge.warn{background:var(--warn)}.badge.bad{background:var(--bad)}
+.wrap{max-height:300px;overflow:auto;margin-top:8px}table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{position:sticky;top:0;background:var(--card);color:var(--mut)}
+.err{color:var(--bad);margin-top:8px}.empty{color:var(--mut);margin-top:8px}
+</style></head><body>
+<header><div><h1>IFS Cloud Monitor <small>- IFSCOESALES</small></h1><small id="upd">loading...</small></div>
+<div><label><small>Auto refresh 30s <input type="checkbox" id="auto" checked></small></label> <button onclick="loadAll()">Refresh</button></div></header>
+<main id="main"></main>
+<script>
+const PANELS=[
+ {id:"locks",title:"Database Locks / Blocking Sessions",sev:n=>n>0?"bad":"ok"},
+ {id:"appmsg",title:"Application Message Status",stateCol:"state",bad:/err|fail/i},
+ {id:"bgjobs",title:"Background Jobs Status",stateCol:"state",bad:/err|fail/i},
+ {id:"invalid",title:"Invalid Objects",sev:n=>n>0?"warn":"ok"},
+ {id:"blevel",title:"Index BLEVEL (high)",sev:n=>n>0?"warn":"ok"}];
+const main=document.getElementById("main");
+PANELS.forEach(p=>{const s=document.createElement("section");s.innerHTML=`<h2><span>${p.title}</span><span class="badge" id="b-${p.id}">...</span></h2><div id="c-${p.id}"></div>`;main.appendChild(s)});
+function table(d){const t=document.createElement("table"),h=t.createTHead().insertRow();
+ d.columns.forEach(c=>{const th=document.createElement("th");th.textContent=c;h.appendChild(th)});
+ const b=t.createTBody();d.rows.forEach(r=>{const tr=b.insertRow();r.forEach(v=>{tr.insertCell().textContent=v==null?"":v})});
+ const w=document.createElement("div");w.className="wrap";w.appendChild(t);return w}
+async function load(p){const box=document.getElementById("c-"+p.id),bd=document.getElementById("b-"+p.id);
+ try{const d=await (await fetch("/api/"+p.id)).json();box.textContent="";
+  if(!d.ok){bd.textContent="error";bd.className="badge bad";box.innerHTML='<div class="err"></div>';box.firstChild.textContent=d.error;return}
+  let n=d.rows.length,cls;
+  if(p.stateCol){const ci=d.columns.indexOf("cnt");n=d.rows.reduce((a,r)=>a+r[ci],0);
+   const bad=d.rows.filter(r=>p.bad.test(r[0]||"")).reduce((a,r)=>a+r[ci],0);cls=bad>0?"bad":"ok";bd.textContent=bad>0?bad+" failed / "+n:n+" total"}
+  else{cls=p.sev(n);bd.textContent=n}
+  bd.className="badge "+(cls=="ok"?"":cls);
+  if(!d.rows.length){box.innerHTML='<div class="empty">Nothing to report</div>'}else box.appendChild(table(d))
+ }catch(e){bd.textContent="error";bd.className="badge bad";box.textContent="Request failed: "+e}}
+async function loadAll(){await Promise.all(PANELS.map(load));document.getElementById("upd").textContent="Last updated "+new Date().toLocaleTimeString()}
+loadAll();setInterval(()=>{if(document.getElementById("auto").checked)loadAll()},30000);
+</script></body></html>
